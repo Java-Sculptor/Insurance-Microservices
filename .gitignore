@@ -1,0 +1,11 @@
+.idea/
+**/.idea/
+**/target/
+**/out/
+*.iml
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.properties
+*.log
