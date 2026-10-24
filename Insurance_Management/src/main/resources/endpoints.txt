@@ -1,0 +1,69 @@
+Claim Management — All API Endpoints
+Base URL:
+
+http://localhost:8081/api/v1/claims
+1. Claim APIs
+Method	Endpoint	Description
+POST	/api/v1/claims	Register a new claim
+GET	/api/v1/claims	Retrieve all claims
+GET	/api/v1/claims/{id}	Retrieve claim details by ID
+PUT	/api/v1/claims/{id}	Update a claim
+DELETE	/api/v1/claims/{id}	Cancel a claim before processing
+2. Document APIs
+Method	Endpoint	Description
+POST	/api/v1/claims/{id}/documents	Upload claim documents
+GET	/api/v1/claims/{id}/documents	Retrieve claim documents
+PUT	/api/v1/claims/{id}/documents/verify	Verify claim documents
+3. Survey APIs
+Method	Endpoint	Description
+POST	/api/v1/claims/{id}/survey	Assign a surveyor
+GET	/api/v1/claims/{id}/survey	Retrieve survey details
+PUT	/api/v1/surveys/{surveyId}	Submit or update a survey report
+4. Investigation APIs
+Method	Endpoint	Description
+POST	/api/v1/claims/{id}/investigation	Assign an investigator
+PUT	/api/v1/investigations/{id}	Submit or update an investigation report
+5. Claim Assessment APIs
+The BRD describes Claim Assessment as a feature, but it does not explicitly specify separate assessment endpoints in the API list. The following are suggested endpoints, not exact BRD requirements.
+Method	Suggested Endpoint	Description
+POST	/api/v1/claims/{id}/assessment	Create a claim assessment
+GET	/api/v1/claims/{id}/assessment	Retrieve claim assessment details
+PUT	/api/v1/claims/{id}/assessment	Update a claim assessment
+6. Claim Approval and Rejection APIs
+Method	Endpoint	Description
+PUT	/api/v1/claims/{id}/approve	Approve a claim
+PUT	/api/v1/claims/{id}/reject	Reject a claim
+These endpoints are specified in the BRD. Insurance_App BRD.pdf
+
+7. Claim History API
+The BRD requires an audit trail for claim activities, but it does not explicitly specify a separate history endpoint.
+
+Suggested endpoint:
+Method	Suggested Endpoint	Description
+GET	/api/v1/claims/{id}/history	Retrieve the claim's activity history
+8. Settlement APIs — Separate Module
+The following endpoints appear in the BRD, but they may belong to the separate Settlement Module according to your team's module allocation.
+Method	Endpoint	Description
+POST	/api/v1/claims/{id}/settlement	Process claim settlement
+GET	/api/v1/claims/{id}/settlement	Retrieve settlement details
+These endpoints are included in the BRD's API list. Insurance_App BRD.pdf
+
+
+Recommended implementation order
+Phase 1 — Core Claim Management
+POST /claims → GET /claims → GET /claims/{id} → PUT /claims/{id} → DELETE /claims/{id}
+
+
+Phase 2 — Document Management
+Upload documents → View documents → Verify documents
+
+Phase 3 — Survey and Investigation
+Assign surveyor/investigator → View details → Submit reports
+
+Phase 4 — Assessment and Decision
+Assess claim → Approve or reject → View claim history
+
+Phase 5 — Integration
+Send approved claim information to the Settlement Module.
+
+My recommendation: Do not implement all endpoints at once. First complete and test the five Core Claim APIs in Postman. Once they work correctly, proceed to Document Management and the remaining functionality.

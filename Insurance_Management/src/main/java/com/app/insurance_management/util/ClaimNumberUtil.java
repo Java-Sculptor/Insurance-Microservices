@@ -1,0 +1,26 @@
+
+package com.app.insurance_management.util;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
+
+public final class ClaimNumberUtil {
+
+    private ClaimNumberUtil() {
+    }
+
+    public static String generateClaimNumber() {
+
+        String date = LocalDate.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        String uniquePart = UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 8)
+                .toUpperCase();
+
+        return "CLM-" + date + "-" + uniquePart;
+    }
+}

@@ -1,0 +1,17 @@
+
+package com.app.insurance_management.enums;
+
+public enum ClaimStatus {
+
+    REGISTERED,
+    PENDING_VERIFICATION,
+    UNDER_SURVEY,
+    UNDER_INVESTIGATION,
+    INVESTIGATION_COMPLETED,
+    ASSESSED,
+    PENDING_APPROVAL,
+    APPROVED,
+    REJECTED,
+    PENDING_SETTLEMENT,
+    SETTLED
+}
