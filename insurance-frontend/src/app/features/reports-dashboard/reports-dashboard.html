@@ -1,7 +1,229 @@
-<section class="feature-head">
-  <p class="section-kicker">INSURANCE MANAGEMENT</p>
-  <h1>Reports & Dashboard</h1>
+<section class="rd-heading">
+  <div>
+    <p class="rd-eyebrow">REPORTING WORKSPACE</p>
+    <h1>Reports & Dashboard</h1>
+    <p class="rd-muted">Insurance portfolio overview and operational reports</p>
+  </div>
+  <div class="rd-heading-actions">
+    <span class="rd-source"><span class="rd-live-dot"></span> Reporting API</span>
+    <button class="rd-btn secondary" type="button" (click)="loadOverview(); loadReport()">
+      <i class="bi bi-arrow-clockwise"></i> Refresh data
+    </button>
+  </div>
 </section>
-<section class="feature-body">
-  <div class="feature-empty"><i class="bi bi-layout-text-window-reverse"></i><p>This section is ready for the assigned module developer.</p></div>
+
+<nav class="rd-page-tabs" aria-label="Reports and dashboard views">
+  <button type="button" [class.selected]="view() === 'overview'" (click)="show('overview')">
+    <i class="bi bi-grid-1x2"></i> Overview
+  </button>
+  <button type="button" [class.selected]="view() === 'reports'" (click)="show('reports')">
+    <i class="bi bi-table"></i> Reports
+  </button>
+</nav>
+
+@if (view() === 'overview') {
+@if (overviewError()) {
+<div class="rd-alert" role="alert"><i class="bi bi-exclamation-triangle"></i>
+  <span>{{ overviewError() }}</span>
+  <button type="button" (click)="loadOverview()">Retry</button>
+</div>
+}
+@if (overviewLoading() && !summary()) {
+<div class="rd-message" role="status">Loading dashboard from Spring Boot...</div>
+} @else if (summary(); as s) {
+<section class="rd-stats" aria-label="Dashboard KPIs">
+  <article class="rd-stat">
+    <div class="rd-stat-icon teal"><i class="bi bi-shield-check"></i></div>
+    <div>
+      <p>Total Policies</p><strong>{{ formatNumber(s.totalPolicies) }}</strong><small>{{ formatNumber(s.activePolicies)
+        }} active</small>
+    </div>
+  </article>
+  <article class="rd-stat">
+    <div class="rd-stat-icon blue"><i class="bi bi-cash-stack"></i></div>
+    <div>
+      <p>Premium Collected</p><strong>{{ formatCurrency(s.premiumCollected) }}</strong><small>Payments received</small>
+    </div>
+  </article>
+  <article class="rd-stat">
+    <div class="rd-stat-icon orange"><i class="bi bi-wallet2"></i></div>
+    <div>
+      <p>Outstanding Premium</p><strong>{{ formatCurrency(s.outstandingPremium) }}</strong><small>Amount due</small>
+    </div>
+  </article>
+  <article class="rd-stat">
+    <div class="rd-stat-icon violet"><i class="bi bi-clipboard2-pulse"></i></div>
+    <div>
+      <p>Pending Claims</p><strong>{{ formatNumber(s.pendingClaims) }}</strong><small>{{ formatNumber(s.settledClaims)
+        }} settled</small>
+    </div>
+  </article>
+  <article class="rd-stat">
+    <div class="rd-stat-icon blue"><i class="bi bi-arrow-repeat"></i></div>
+    <div>
+      <p>Renewals Due</p><strong>{{ formatNumber(s.renewalsDue) }}</strong><small>Requires follow-up</small>
+    </div>
+  </article>
+  <article class="rd-stat">
+    <div class="rd-stat-icon teal"><i class="bi bi-people"></i></div>
+    <div>
+      <p>Active Agents</p><strong>{{ formatNumber(s.activeAgents) }}</strong><small>Distribution network</small>
+    </div>
+  </article>
 </section>
+}
+
+<section class="rd-charts" aria-label="Dashboard charts">
+  <article class="rd-panel">
+    <div class="rd-panel-header">
+      <div>
+        <h2>Policies by type</h2>
+        <p>Health, life, and vehicle distribution</p>
+      </div><i class="bi bi-pie-chart"></i>
+    </div>
+    @if (policySegments().length) {
+    <div class="rd-donut-content">
+      <div class="rd-donut" [style.background]="donutBackground()" role="img"
+        aria-label="Distribution of policies by type">
+        <div class="rd-donut-hole"><strong>{{ formatNumber(summary()?.totalPolicies) }}</strong><span>Policies</span>
+        </div>
+      </div>
+      <div class="rd-legend">
+        @for (part of policySegments(); track part.label) {
+        <div><span class="rd-legend-name"><i [style.background]="part.color"></i>{{ part.label }}</span><span><b>{{
+              part.count }}</b> <small>{{ part.percent | number:'1.0-0' }}%</small></span></div>
+        }
+      </div>
+    </div>
+    } @else { <div class="rd-empty-chart">No policy chart data available</div> }
+  </article>
+  <article class="rd-panel">
+    <div class="rd-panel-header">
+      <div>
+        <h2>Claims by status</h2>
+        <p>Current claim processing breakdown</p>
+      </div><i class="bi bi-clipboard2-data"></i>
+    </div>
+    @if (claimSegments().length) {
+    <div class="rd-claim-list">
+      @for (part of claimSegments(); track part.label) {
+      <div class="rd-claim-item">
+        <div class="rd-claim-title"><span>{{ part.label }}</span><b>{{ part.count }}</b></div>
+        <div class="rd-track">
+          <div [style.width.%]="part.percent" [style.background]="part.color"></div>
+        </div>
+      </div>
+      }
+    </div>
+    } @else { <div class="rd-empty-chart">No claim chart data available</div> }
+  </article>
+  <article class="rd-panel">
+    <div class="rd-panel-header">
+      <div>
+        <h2>Premiums collected</h2>
+        <p>Monthly totals reported by the service</p>
+      </div><i class="bi bi-bar-chart-line"></i>
+    </div>
+    @if (monthlyPremiums().length) {
+    <div class="rd-bars">
+      @for (point of monthlyPremiums(); track point.label) {
+      <div class="rd-bar-row"><span>{{ point.label }}</span>
+        <div class="rd-track">
+          <div class="bar-teal" [style.width.%]="barWidth(point.value, monthlyPremiums())"></div>
+        </div><strong>{{ formatCurrency(point.value) }}</strong>
+      </div>
+      }
+    </div>
+    } @else { <div class="rd-empty-chart">No monthly premium data available</div> }
+  </article>
+  <article class="rd-panel">
+    <div class="rd-panel-header">
+      <div>
+        <h2>Policies issued</h2>
+        <p>Monthly policy issuance count</p>
+      </div><i class="bi bi-calendar3"></i>
+    </div>
+    @if (monthlyPolicies().length) {
+    <div class="rd-bars">
+      @for (point of monthlyPolicies(); track point.label) {
+      <div class="rd-bar-row"><span>{{ point.label }}</span>
+        <div class="rd-track">
+          <div class="bar-blue" [style.width.%]="barWidth(point.value, monthlyPolicies())"></div>
+        </div><strong>{{ point.value }}</strong>
+      </div>
+      }
+    </div>
+    } @else { <div class="rd-empty-chart">No policy issuance data available</div> }
+  </article>
+</section>
+}
+
+@if (view() === 'reports') {
+<div class="rd-report-layout">
+  <div class="rd-report-tabs" role="group" aria-label="Report type">
+    @for (opt of reportOptions; track opt.id) {
+    <button type="button" [class.active]="reportType() === opt.id" (click)="selectReport(opt.id)">
+      <i [class]="'bi bi-' + opt.icon"></i>{{ opt.label }}
+    </button>
+    }
+  </div>
+  <section class="rd-panel rd-report-panel">
+    <div class="rd-panel-header report-heading">
+      <div>
+        <h2>{{ reportLabel() }} report</h2>
+        <p>Live data from the reporting service</p>
+      </div>
+      <button type="button" class="rd-btn primary" [disabled]="exportLoading()" (click)="exportCsv()"><i
+          class="bi bi-download"></i>{{ exportLoading() ? 'Downloading...' : 'Export CSV' }}</button>
+    </div>
+    @if (exportingError()) { <p class="rd-inline-error" role="alert">{{ exportingError() }}</p> }
+    <form class="rd-filters" (submit)="applyFilters($event)" aria-label="Report filters">
+      <label>Insurance type<select name="insuranceType" [value]="insuranceType"
+          (change)="insuranceType = $any($event.target).value">
+          <option value="">All types</option>
+          <option value="HEALTH">Health</option>
+          <option value="LIFE">Life</option>
+          <option value="VEHICLE">Vehicle</option>
+        </select></label>
+      <label>Status<input name="status" type="text" placeholder="e.g. ACTIVE" [value]="status"
+          (input)="status = $any($event.target).value" /></label>
+      <label>Start date<input name="startDate" type="date" [value]="startDate"
+          (change)="startDate = $any($event.target).value" /></label>
+      <label>End date<input name="endDate" type="date" [value]="endDate"
+          (change)="endDate = $any($event.target).value" /></label>
+      <label>Agent ID<input name="agentId" type="number" min="1" placeholder="Any" [value]="agentId"
+          (input)="agentId = $any($event.target).value" /></label>
+      <label>Customer ID<input name="customerId" type="number" min="1" placeholder="Any" [value]="customerId"
+          (input)="customerId = $any($event.target).value" /></label>
+      <div class="rd-filter-buttons"><button type="submit" class="rd-btn primary"><i class="bi bi-funnel"></i>
+          Apply</button><button type="button" class="rd-btn secondary" (click)="resetFilters()">Reset</button></div>
+    </form>
+    @if (reportError()) { <div class="rd-alert" role="alert"><i class="bi bi-exclamation-triangle"></i><span>{{
+        reportError() }}</span><button type="button" (click)="loadReport()">Retry</button></div> }
+    <div class="rd-table-toolbar"><span>{{ formatNumber(totalElements()) }} records</span><span>Page {{ totalPages() ?
+        page()+1 : 0 }} of {{ totalPages() }}</span></div>
+    <div class="rd-table-scroll">
+      <table>
+        <thead>
+          <tr>@for (key of columnKeys(); track key) { <th scope="col">{{ label(key) }}</th> }</tr>
+        </thead>
+        <tbody>
+          @if (reportLoading()) { <tr>
+            <td colspan="16" class="rd-placeholder">Loading report...</td>
+          </tr> }
+          @else if (!rows().length) { <tr>
+            <td colspan="16" class="rd-placeholder">No records found for the selected filters.</td>
+          </tr> }
+          @else { @for (row of rows(); track $index) { <tr>@for (key of columnKeys(); track key) { <td>{{ cell(row, key)
+              }}</td> }</tr> } }
+        </tbody>
+      </table>
+    </div>
+    <div class="rd-pagination"><button class="rd-btn secondary" type="button"
+        [disabled]="page() === 0 || reportLoading()" (click)="changePage(page()-1)"><i class="bi bi-chevron-left"></i>
+        Previous</button><span>{{ totalPages() ? page()+1 : 0 }} / {{ totalPages() }}</span><button type="button"
+        class="rd-btn secondary" [disabled]="page()+1 >= totalPages() || reportLoading()"
+        (click)="changePage(page()+1)">Next <i class="bi bi-chevron-right"></i></button></div>
+  </section>
+</div>
+}
